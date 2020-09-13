@@ -1,6 +1,29 @@
 <?php
 session_start();
 require('dbconnect.php');
+
+// var_dump($_FILES['image']);
+// exit;
+
+// 機能拡張
+if (!empty($_FILES['image'])) {
+	// 投稿画像ファイルの拡張子チェック
+	$fileName = $_FILES['image']['name'];
+	if (!empty($fileName)) {
+		$ext = substr($fileName, -3);
+		if ($ext != 'jpg' && $ext != 'gif') {
+			$error['image'] = 'type';
+		}
+	}
+	if (empty($error)) {
+		// 画像をアップロードする
+		$image = date('YmdHis') . $_FILES['image']['name'];
+		move_uploaded_file($_FILES['image']['tmp_name'], 'post_picture/' .$image);
+
+	}
+}
+// ここまで
+
 if (isset($_SESSION['id']) && $_SESSION['time'] + 3600 > time()) {
 	// ログインしている
 	$_SESSION['time'] = time();
@@ -16,18 +39,20 @@ if (isset($_SESSION['id']) && $_SESSION['time'] + 3600 > time()) {
 if (!empty($_POST)) {
 	if ($_POST['message'] != '') {
     if($_POST['reply_post_id'] != '') {
-		$message = $db->prepare('INSERT INTO posts SET member_id=?, message=?,reply_post_id=?,created=NOW()');
+		$message = $db->prepare('INSERT INTO posts SET member_id=?, message=?,reply_post_id=?,picture_post=?,created=NOW()');
 		$message->execute(array(
 			$member['id'],
 			$_POST['message'],
-			$_POST['reply_post_id']
+			$_POST['reply_post_id'],
+			$image  //画像投稿機能拡張に伴い追加
 		));
     header('Location: index.php'); exit();
     } else {
-      $message = $db->prepare('INSERT INTO posts SET member_id=?, message=?,created=NOW()');
+      $message = $db->prepare('INSERT INTO posts SET member_id=?, message=?,picture_post=?,created=NOW()');
       $message->execute(array(
         $member['id'],
-        $_POST['message']
+				$_POST['message'],
+				$image  //画像投稿機能拡張に伴い追加
       ));
     }
 	}
@@ -90,13 +115,25 @@ if (isset($_REQUEST['res'])) {
   </div>
   <div id="content">
   <div style="text-align: right"><a href="logout.php">ログアウト</a></div>
-		<form action="" method="post">
+		<form action="" method="post" enctype="multipart/form-data">
 		<dl>
 			<dt><?php echo h($member['name']); ?>さん、メッセージをどうぞ</dt>
 		<dd>
 		<textarea name="message" cols="50" rows="5"><?php echo h($message, ENT_QUOTES); ?></textarea>
 		<input type="hidden" name="reply_post_id" value="<?php echo h($_REQUEST['res'], ENT_QUOTES); ?>" />
 		</dd>
+<!-- 画像アップロード機能追加 -->
+		<dt>写真など</dt>
+		<dd><input type="file" name="image" size="35" />
+			<?php if ($error['post_image'] == 'type'): ?>
+			<p class="error">* 写真などは「.gif」または「.jpg」の画像を指定してください
+			</p>
+			<?php endif; ?>
+			<?php if (!empty($error)): ?>
+			<p class="error">* 恐れ入りますが、画像を投稿する場合は、改めて指定してください</p>
+			<?php endif; ?>
+		</dd>
+<!-- ここまで -->
 		</dl>
 		<div>
 		<input type="submit" value="投稿する" />
@@ -106,19 +143,56 @@ if (isset($_REQUEST['res'])) {
 		<?php
 		foreach ($posts as $post):
 		?>
+
 		<div class="msg">
-			<img src="member_picture/<?php echo h($post['picture'], ENT_QUOTES); ?>" width="48" height="48" alt="<?php echo h($post['name'], ENT_QUOTES); ?>" />
-			<p><?php echo makeLink(h($post['message'], ENT_QUOTES));?><span class="name">（<?php echo h($post['name'], ENT_QUOTES); ?>）</span>
-      [<a href="index.php?res=<?php echo h($post['id'], ENT_QUOTES); ?>">Re</a>]</p>
-			<p class="day"><a href="view.php?id=<?php echo h($post['id'], ENT_QUOTES); ?>"><?php echo h($post['created'], ENT_QUOTES); ?></a>
+    <!-- ユーザーのアイコン画像 -->
+		<?php
+				$ext1 = substr($post['picture'], -3);
+				if ($ext1 == 'jpg' || $ext1 == 'gif'):
+		?>
+		  <img src="member_picture/<?php echo h($post['picture'], ENT_QUOTES); ?>" width="48" height="48" alt="<?php echo h($post['name'], ENT_QUOTES); ?>" />		
+		<?php
+			  endif;
+		?>
+
+    <?php
+				if ($ext1 != 'jpg' && $ext1 != 'gif'):
+		?>
+		<img src="member_picture/default.gif" width="48" height="48" alt="<?php echo h($post['name'], ENT_QUOTES); ?>" />		
+		<?php
+			  endif;
+		?>
+
+		<!-- 投稿されている画像 -->
+		<?php
+    		$ext2 = substr($post['picture_post'], -3);
+				if ($ext2 == 'jpg' || $ext2 =='gif'):
+		?>
+    <img src="post_picture/<?php echo h($post['picture_post']); ?>" width="48" height="48" alt="<?php echo h($post['picture_post'], ENT_QUOTES); ?>" />
+		<?php
+			  endif;
+		?>
+
+		<?php
+				if ($ext2 != 'jpg' && $ext2 != 'gif'):
+		?>
+    <img src="post_picture/No_Image.jpg" width="48" height="48" alt="画像なし" />
+
+		<?php
+			  endif;
+		?>
+
+		<p><?php echo makeLink(h($post['message'], ENT_QUOTES));?><span class="name">（<?php echo h($post['name'], ENT_QUOTES); ?>）</span>
+    [<a href="index.php?res=<?php echo h($post['id'], ENT_QUOTES); ?>">Re</a>]</p>
+		<p class="day"><a href="view.php?id=<?php echo h($post['id'], ENT_QUOTES); ?>"><?php echo h($post['created'], ENT_QUOTES); ?></a>
 
       <?php
 				if ($post['reply_post_id'] > 0):
-					?>
-					<a href="view.php?id=<?php echo h($post['reply_post_id'], ENT_QUOTES); ?>">返信元のメッセージ</a>
-					<?php
-				endif;
-				?>
+			?>
+			<a href="view.php?id=<?php echo h($post['reply_post_id'], ENT_QUOTES); ?>">返信元のメッセージ</a>
+			<?php
+			  endif;
+			?>
 
 				<?php
 				if ($_SESSION['id'] == $post['member_id']):
