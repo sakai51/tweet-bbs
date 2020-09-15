@@ -5,13 +5,13 @@ require('dbconnect.php');
 // var_dump($_FILES['image']);
 // exit;
 
-// 機能拡張
+// 画像投稿機能拡張
 if (!empty($_FILES['image'])) {
 	// 投稿画像ファイルの拡張子チェック
 	$fileName = $_FILES['image']['name'];
 	if (!empty($fileName)) {
 		$ext = substr($fileName, -3);
-		if ($ext != 'jpg' && $ext != 'gif') {
+		if ($ext != 'jpg' && $ext != 'gif' && $ext != 'png' && $ext != 'JPG' && $ext != 'jpeg') {
 			$error['image'] = 'type';
 		}
 	}
@@ -148,7 +148,7 @@ if (isset($_REQUEST['res'])) {
     <!-- ユーザーのアイコン画像 -->
 		<?php
 				$ext1 = substr($post['picture'], -3);
-				if ($ext1 == 'jpg' || $ext1 == 'gif'):
+				if ($ext1 == 'jpg' || $ext1 == 'gif' || $ext1 == 'png' || $ext1 == 'JPG' || $ext == 'jpeg'):
 		?>
 		  <img src="member_picture/<?php echo h($post['picture'], ENT_QUOTES); ?>" width="48" height="48" alt="<?php echo h($post['name'], ENT_QUOTES); ?>" />		
 		<?php
@@ -156,7 +156,7 @@ if (isset($_REQUEST['res'])) {
 		?>
 
     <?php
-				if ($ext1 != 'jpg' && $ext1 != 'gif'):
+				if ($ext1 != 'jpg' && $ext1 != 'gif' && $ext1 != 'png' && $ext1 && 'JPG' && $ext1 != 'jpeg'):
 		?>
 		<img src="member_picture/default.gif" width="48" height="48" alt="<?php echo h($post['name'], ENT_QUOTES); ?>" />		
 		<?php
@@ -166,7 +166,7 @@ if (isset($_REQUEST['res'])) {
 		<!-- 投稿されている画像 -->
 		<?php
     		$ext2 = substr($post['picture_post'], -3);
-				if ($ext2 == 'jpg' || $ext2 =='gif'):
+				if ($ext2 == 'jpg' || $ext2 =='gif' || $ext2 == 'png' || $ext2 == 'JPG' || $ext2 == 'jpeg'):
 		?>
     <img src="post_picture/<?php echo h($post['picture_post']); ?>" width="48" height="48" alt="<?php echo h($post['picture_post'], ENT_QUOTES); ?>" />
 		<?php
@@ -174,7 +174,7 @@ if (isset($_REQUEST['res'])) {
 		?>
 
 		<?php
-				if ($ext2 != 'jpg' && $ext2 != 'gif'):
+				if ($ext2 != 'jpg' && $ext2 != 'gif' && $ext2 != 'png' && $ext2 && 'JPG' && $ext2 != 'jpeg'):
 		?>
     <img src="post_picture/No_Image.jpg" width="48" height="48" alt="画像なし" />
 
