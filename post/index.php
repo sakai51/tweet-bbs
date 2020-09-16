@@ -53,7 +53,8 @@ if (!empty($_POST)) {
         $member['id'],
 				$_POST['message'],
 				$image  //画像投稿機能拡張に伴い追加
-      ));
+			));
+		header('Location: index.php'); exit();
     }
 	}
 }
