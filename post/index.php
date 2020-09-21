@@ -2,8 +2,8 @@
 session_start();
 require('dbconnect.php');
 
-// var_dump($_FILES['image']);
-// exit;
+// タイムゾーンを設定
+date_default_timezone_set('Asia/Tokyo');
 
 // 画像投稿機能拡張
 if (!empty($_FILES['image'])) {
@@ -36,23 +36,30 @@ if (isset($_SESSION['id']) && $_SESSION['time'] + 3600 > time()) {
 	exit();
 }
 // 投稿を記録する
+
+if(empty($_POST['post_time'])){
+  $_POST['post_time'] = date("Y-m-d H:i:s");
+}
+
 if (!empty($_POST)) {
 	if ($_POST['message'] != '') {
     if($_POST['reply_post_id'] != '') {
-		$message = $db->prepare('INSERT INTO posts SET member_id=?, message=?,reply_post_id=?,picture_post=?,created=NOW()');
+		$message = $db->prepare('INSERT INTO posts SET member_id=?, message=?,reply_post_id=?,picture_post=?,post_time=?,created=NOW()');
 		$message->execute(array(
 			$member['id'],
 			$_POST['message'],
 			$_POST['reply_post_id'],
-			$image  //画像投稿機能拡張に伴い追加
+			$image,  //画像投稿機能拡張に伴い追加
+			$_POST['post_time']
 		));
     header('Location: index.php'); exit();
     } else {
-      $message = $db->prepare('INSERT INTO posts SET member_id=?, message=?,picture_post=?,created=NOW()');
+      $message = $db->prepare('INSERT INTO posts SET member_id=?, message=?,picture_post=?,post_time=?,created=NOW()');
       $message->execute(array(
         $member['id'],
 				$_POST['message'],
-				$image  //画像投稿機能拡張に伴い追加
+				$image,  //画像投稿機能拡張に伴い追加
+				$_POST['post_time']
 			));
 		header('Location: index.php'); exit();
     }
@@ -67,16 +74,26 @@ if ($page == '') {
 $page = max($page, 1);
 
 // 最終ページを取得する
-$counts = $db->query('SELECT COUNT(*) AS cnt FROM posts');
+// $counts = $db->query('SELECT COUNT(*) AS cnt FROM posts');
+$nowtime = date("Y-m-d H:i:s");
+$counts = $db->prepare('SELECT COUNT(*) AS cnt FROM posts WHERE post_time <= ?');
+$counts->bindParam(1, $nowtime, PDO::PARAM_STR);
+$counts->execute();
+
 $cnt = $counts->fetch();
+
+// var_dump($cnt);
+// exit;
+
 $maxPage = ceil($cnt['cnt'] / 5);
 $page = min($page, $maxPage);
 
 $start = ($page - 1) * 5;
 $start = max(0, $start);
 
-$posts = $db->prepare('SELECT m.name, m.picture, p.* FROM members m, posts p WHERE m.id=p.member_id ORDER BY p.created DESC LIMIT ?, 5');
-$posts->bindParam(1, $start, PDO::PARAM_INT);
+$posts = $db->prepare('SELECT m.name, m.picture, p.* FROM members m, posts p WHERE m.id=p.member_id AND post_time <= ? ORDER BY p.created DESC LIMIT ?, 5');
+$posts->bindParam(1, $nowtime, PDO::PARAM_STR);
+$posts->bindParam(2, $start, PDO::PARAM_INT);
 $posts->execute();
 
 
@@ -135,6 +152,13 @@ if (isset($_REQUEST['res'])) {
 			<?php endif; ?>
 		</dd>
 <!-- ここまで -->
+
+<!-- 投稿時間指定機能追加 -->
+    <dt>投稿時間指定</dt>
+		<dd><input type="datetime-local" name="post_time" value="">
+		</dd>
+<!-- ここまで -->
+
 		</dl>
 		<div>
 		<input type="submit" value="投稿する" />
@@ -144,6 +168,9 @@ if (isset($_REQUEST['res'])) {
 		<?php
 		foreach ($posts as $post):
 		?>
+    
+		<!-- post_timeが現在時刻もしくは過去の時刻の場合に投稿を表示する -->
+		<?php if ($post['post_time'] <= date("Y-m-d H:i:s")): ?>
 
 		<div class="msg">
     <!-- ユーザーのアイコン画像 -->
@@ -185,7 +212,7 @@ if (isset($_REQUEST['res'])) {
 
 		<p><?php echo makeLink(h($post['message'], ENT_QUOTES));?><span class="name">（<?php echo h($post['name'], ENT_QUOTES); ?>）</span>
     [<a href="index.php?res=<?php echo h($post['id'], ENT_QUOTES); ?>">Re</a>]</p>
-		<p class="day"><a href="view.php?id=<?php echo h($post['id'], ENT_QUOTES); ?>"><?php echo h($post['created'], ENT_QUOTES); ?></a>
+		<p class="day"><a href="view.php?id=<?php echo h($post['id'], ENT_QUOTES); ?>"><?php echo h($post['post_time'], ENT_QUOTES); ?></a>
 
       <?php
 				if ($post['reply_post_id'] > 0):
@@ -197,14 +224,18 @@ if (isset($_REQUEST['res'])) {
 
 				<?php
 				if ($_SESSION['id'] == $post['member_id']):
-					?>
+				?>
 					[<a href="delete.php?id=<?php echo h($post['id']); ?>" style="color:#F33;">削除</a>]
-						<?php
-					endif;
-					?>
+				<?php
+				endif;
+				?>
+
 
 			</p>
 		</div>
+
+		<?php endif; ?>
+
 		<?php
 		endforeach;
 		?>
