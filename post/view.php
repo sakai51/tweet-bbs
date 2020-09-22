@@ -33,9 +33,9 @@ $posts->execute(array($_REQUEST['id']));
 				<!-- アイコン画像の表示 -->
 				<?php
 				  $ext1 = substr($post['picture'], -3);
-				  if ($ext1 == 'jpg' || $ext1 == 'gif'):
+				  if ($ext1 == 'jpg' || $ext1 == 'gif' || $ext1 == 'png' || $ext1 == 'jpeg' || $ext1 == 'JPG'):
 		    ?>
-				<img src="member_picture/<?php echo htmlspecialchars($post['picture'], ENT_QUOTES); ?>" width="48" height="48" alt="<?php echo htmlspecialchars($post['name'], ENT_QUOTES); ?>" />
+				<img src="member_picture/<?php echo htmlspecialchars($post['picture'], ENT_QUOTES); ?>" width="48" height="auto" alt="<?php echo htmlspecialchars($post['name'], ENT_QUOTES); ?>" />
 				<?php
 			    endif;
     		?>
@@ -51,15 +51,15 @@ $posts->execute(array($_REQUEST['id']));
 				<!-- 投稿されている画像 -->
 				<?php
 						$ext2 = substr($post['picture_post'], -3);
-						if ($ext2 == 'jpg' || $ext2 =='gif'):
+						if ($ext2 == 'jpg' || $ext2 =='gif' || $ext2 == 'png' || $ext2 == 'jpeg' || $ext2 == 'JPG'):
 				?>
-				<img src="post_picture/<?php echo htmlspecialchars($post['picture_post']); ?>" width="200" height="200" alt="<?php echo htmlspecialchars($post['picture_post'], ENT_QUOTES); ?>" />
+				<img src="post_picture/<?php echo htmlspecialchars($post['picture_post']); ?>" width="200" height="auto" alt="<?php echo htmlspecialchars($post['picture_post'], ENT_QUOTES); ?>" />
 				<?php
 						endif;
 				?>
 
 				<?php
-						if ($ext2 != 'jpg' && $ext2 != 'gif'):
+						if ($ext2 != 'jpg' && $ext2 != 'gif' && $ext2 != 'png' && $ext2 != 'jpeg' && $ext2 != 'JPG'):
 				?>
 				<img src="post_picture/No_Image.jpg" width="200" height="200" alt="画像なし" />
 				<?php

@@ -75,22 +75,20 @@ $page = max($page, 1);
 
 // 最終ページを取得する
 // $counts = $db->query('SELECT COUNT(*) AS cnt FROM posts');
+// ↑元々はこれ。post_timeが未来のものはカウントしないようにしている
 $nowtime = date("Y-m-d H:i:s");
 $counts = $db->prepare('SELECT COUNT(*) AS cnt FROM posts WHERE post_time <= ?');
 $counts->bindParam(1, $nowtime, PDO::PARAM_STR);
 $counts->execute();
 
 $cnt = $counts->fetch();
-
-// var_dump($cnt);
-// exit;
-
 $maxPage = ceil($cnt['cnt'] / 5);
 $page = min($page, $maxPage);
 
 $start = ($page - 1) * 5;
 $start = max(0, $start);
 
+// post_timeが未来のものはSELECTしないようにしている
 $posts = $db->prepare('SELECT m.name, m.picture, p.* FROM members m, posts p WHERE m.id=p.member_id AND post_time <= ? ORDER BY p.created DESC LIMIT ?, 5');
 $posts->bindParam(1, $nowtime, PDO::PARAM_STR);
 $posts->bindParam(2, $start, PDO::PARAM_INT);
@@ -178,7 +176,7 @@ if (isset($_REQUEST['res'])) {
 				$ext1 = substr($post['picture'], -3);
 				if ($ext1 == 'jpg' || $ext1 == 'gif' || $ext1 == 'png' || $ext1 == 'JPG' || $ext == 'jpeg'):
 		?>
-		  <img src="member_picture/<?php echo h($post['picture'], ENT_QUOTES); ?>" width="48" height="48" alt="<?php echo h($post['name'], ENT_QUOTES); ?>" />		
+		  <img src="member_picture/<?php echo h($post['picture'], ENT_QUOTES); ?>" width="50" height="auto" alt="<?php echo h($post['name'], ENT_QUOTES); ?>" />		
 		<?php
 			  endif;
 		?>
@@ -196,7 +194,7 @@ if (isset($_REQUEST['res'])) {
     		$ext2 = substr($post['picture_post'], -3);
 				if ($ext2 == 'jpg' || $ext2 =='gif' || $ext2 == 'png' || $ext2 == 'JPG' || $ext2 == 'jpeg'):
 		?>
-    <img src="post_picture/<?php echo h($post['picture_post']); ?>" width="48" height="48" alt="<?php echo h($post['picture_post'], ENT_QUOTES); ?>" />
+    <img src="post_picture/<?php echo h($post['picture_post']); ?>" width="50" height="auto" alt="<?php echo h($post['picture_post'], ENT_QUOTES); ?>" />
 		<?php
 			  endif;
 		?>
